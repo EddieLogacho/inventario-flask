@@ -9,5 +9,6 @@ def init_db(app):
     """
     db.init_app(app)
     with app.app_context():
-        from models import Producto  # asegura que el modelo esté registrado
+        # Importa los modelos aquí para que queden registrados antes de create_all
+        from models import Producto
         db.create_all()

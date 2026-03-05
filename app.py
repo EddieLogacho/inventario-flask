@@ -3,30 +3,53 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from db import init_db, db
 from models import Producto
+from inventario.productos import (
+    guardar_txt, guardar_json, guardar_csv,
+    leer_txt, leer_json, leer_csv
+)
 
-# Rutas absolutas a las carpetas del proyecto
+# Directorios del proyecto
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 
 def create_app():
-    # Forzamos a Flask a usar las carpetas correctas (evita problemas de rutas)
+    """
+    Crea y configura la aplicación Flask.
+    - Registra una única instancia de SQLAlchemy (db) vía init_db(app).
+    - Registra rutas y filtros.
+    """
     app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 
     # ---------- Configuración ----------
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
-    # Por defecto usa SQLite local en el archivo inventario.db
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///inventario.db")
+
+    # Opción A (como venías): DB en la raíz del proyecto
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///inventario.db"
+    )
+
+    # (Opcional) Opción B: DB dentro de ./instance/app.db
+    # db_path = os.path.join(BASE_DIR, "instance", "app.db")
+    # os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    # app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", f"sqlite:///{db_path}")
+
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # ---------- Base de datos ----------
+    # MUY IMPORTANTE: Registrar la instancia global de db con la app creada.
     init_db(app)
 
-    # ---------- CLI ----------
+    # ---------- CLI (opcional) ----------
     # Comandos: flask --app app create-db / drop-db / seed
-    from cli import register_cli
-    register_cli(app)
+    try:
+        from cli import register_cli
+        register_cli(app)
+    except Exception:
+        # Si no tienes cli.py, no se rompe nada.
+        pass
 
     # ---------- Filtros / Helpers Jinja ----------
     @app.template_filter("moneda")
@@ -37,7 +60,8 @@ def create_app():
         except Exception:
             return value
 
-    # ---------- Rutas ----------
+    # --------------------- RUTAS ---------------------
+
     @app.route("/")
     def home():
         return redirect(url_for("lista_productos"))
@@ -68,6 +92,7 @@ def create_app():
             stock_raw = (request.form.get("stock") or "0").strip()
 
             errores = []
+
             # Validaciones
             if not nombre:
                 errores.append("El nombre es obligatorio.")
@@ -98,11 +123,21 @@ def create_app():
                 # Volver a mostrar el formulario conservando lo ingresado
                 return render_template("producto_form.html", producto=None, form=request.form)
 
-            # Crear y guardar
+            # Crear y guardar en SQLite
             p = Producto(nombre=nombre, descripcion=descripcion, precio=precio, stock=stock)
             db.session.add(p)
             db.session.commit()
             flash("✅ Producto creado con éxito.", "success")
+
+            # Guardar también en archivos TXT, JSON y CSV (requisito)
+            try:
+                guardar_txt(nombre, precio, stock, descripcion)
+                guardar_json(nombre, precio, stock, descripcion)
+                guardar_csv(nombre, precio, stock, descripcion)
+            except Exception as e:
+                # No bloqueamos la app si falla el guardado en archivos
+                flash(f"⚠️ No se pudo guardar en archivos: {e}", "warning")
+
             return redirect(url_for("lista_productos"))
 
         # GET
@@ -150,7 +185,7 @@ def create_app():
                     flash(e, "danger")
                 return render_template("producto_form.html", producto=p, form=request.form)
 
-            # Guardar cambios
+            # Guardar cambios en SQLite
             p.nombre = nombre
             p.descripcion = descripcion
             p.precio = precio
@@ -173,6 +208,22 @@ def create_app():
         db.session.commit()
         flash("🗑️ Producto eliminado.", "info")
         return redirect(url_for("lista_productos"))
+
+    # ---------- Ruta NUEVA: ver datos de TXT/JSON/CSV + SQLite ----------
+    @app.route("/datos")
+    def datos():
+        datos_txt = leer_txt()
+        datos_json = leer_json()
+        datos_csv = leer_csv()
+        productos = Producto.query.order_by(Producto.id.desc()).all()
+
+        return render_template(
+            "datos.html",
+            datos_txt=datos_txt,
+            datos_json=datos_json,
+            datos_csv=datos_csv,
+            productos=productos
+        )
 
     return app
 

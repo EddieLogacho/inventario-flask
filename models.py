@@ -1,34 +1,29 @@
 # models.py
+from db import db  # <-- Importa la MISMA instancia
 from datetime import datetime
-from db import db
-
 
 class Producto(db.Model):
     __tablename__ = "productos"
 
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(120), nullable=False, unique=True)
-    descripcion = db.Column(db.Text, default="")
+    nombre = db.Column(db.String(80), unique=True, nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
     precio = db.Column(db.Float, nullable=False, default=0.0)
     stock = db.Column(db.Integer, nullable=False, default=0)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # --- NUEVO: campos de auditoría ---
+    # Se asigna automáticamente al crear (del lado de la BD).
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.now()
+    )
+    # Se actualiza automáticamente en cada UPDATE (puede quedar NULL en creación).
     updated_at = db.Column(
-        db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        nullable=True,
+        onupdate=db.func.now()
     )
 
-    # ==== Métodos de ayuda orientados a objetos ====
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    @staticmethod
-    def buscar_por_nombre(texto: str):
-        """Devuelve un query filtrando por nombre (case-insensitive)."""
-        return Producto.query.filter(Producto.nombre.ilike(f"%{texto}%"))
-
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"<Producto {self.id} - {self.nombre}>"

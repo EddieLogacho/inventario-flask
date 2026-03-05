@@ -1,39 +1,15 @@
-{% extends "base.html" %}
-{% block title %}{{ 'Nuevo producto' if not producto else 'Editar producto' }} | Inventario{% endblock %}
+<form method="post" action="{{ url_for('crear_producto') }}">
+  <label>Nombre</label>
+  <input type="text" name="nombre" value="{{ (form.nombre if form else (producto.nombre if producto else '')) or '' }}" required>
 
-{% block content %}
-<h1 class="h3 mb-3">{{ 'Nuevo producto' if not producto else 'Editar producto' }}</h1>
+  <label>Descripción</label>
+  <textarea name="descripcion">{{ (form.descripcion if form else (producto.descripcion if producto else '')) or '' }}</textarea>
 
-<form method="post" novalidate>
-  <div class="mb-3">
-    <label class="form-label">Nombre*</label>
-    <input type="text" name="nombre" class="form-control" required
-           value="{{ (form and form.get('nombre')) or (producto and producto.nombre) or '' }}">
-  </div>
+  <label>Precio</label>
+  <input type="number" step="0.01" name="precio" value="{{ (form.precio if form else (producto.precio if producto else 0)) }}" required>
 
-  <div class="mb-3">
-    <label class="form-label">Descripción</label>
-    <textarea name="descripcion" class="form-control" rows="3">{{ (form and form.get('descripcion')) or (producto and producto.descripcion) or '' }}</textarea>
-  </div>
+  <label>Stock</label>
+  <input type="number" name="stock" value="{{ (form.stock if form else (producto.stock if producto else 0)) }}" required>
 
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <label class="form-label">Precio*</label>
-      <input type="number" step="0.01" min="0" name="precio" class="form-control" required
-             value="{{ (form and form.get('precio')) or (producto and producto.precio) or '' }}">
-    </div>
-    <div class="col-md-6 mb-3">
-      <label class="form-label">Stock*</label>
-      <input type="number" min="0" name="stock" class="form-control" required
-             value="{{ (form and form.get('stock')) or (producto and producto.stock) or '' }}">
-    </div>
-  </div>
-
-  <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-primary">
-      {{ 'Crear' if not producto else 'Guardar cambios' }}
-    </button>
-    <a class="btn btn-secondary" href="{{ url_for('lista_productos') }}">Cancelar</a>
-  </div>
+  <button type="submit">Guardar</button>
 </form>
-{% endblock %}

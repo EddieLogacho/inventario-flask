@@ -1,34 +1,34 @@
 # cli.py
 import click
+from flask import current_app
+from flask.cli import with_appcontext
 from db import db
 from models import Producto
 
+@click.command("create-db")
+@with_appcontext
+def create_db_command():
+    db.create_all()
+    click.echo("✅ Base de datos creada.")
+
+@click.command("drop-db")
+@with_appcontext
+def drop_db_command():
+    db.drop_all()
+    click.echo("🗑️ Base de datos eliminada.")
+
+@click.command("seed")
+@with_appcontext
+def seed_command():
+    demo = [
+        Producto(nombre="Laptop", descripcion="14 pulgadas", precio=650.0, stock=5),
+        Producto(nombre="Mouse", descripcion="Óptico", precio=12.5, stock=30),
+    ]
+    db.session.add_all(demo)
+    db.session.commit()
+    click.echo("🌱 Datos de ejemplo insertados.")
 
 def register_cli(app):
-    @app.cli.command("create-db")
-    def create_db():
-        """Crea las tablas en la base de datos."""
-        db.create_all()
-        click.echo("✔ Tablas creadas")
-
-    @app.cli.command("drop-db")
-    def drop_db():
-        """Elimina todas las tablas."""
-        db.drop_all()
-        click.echo("✔ Tablas eliminadas")
-
-    @app.cli.command("seed")
-    def seed():
-        """Inserta datos de ejemplo si la tabla está vacía."""
-        if Producto.query.count() > 0:
-            click.echo("ℹ Ya existen productos; no se insertó nada.")
-            return
-
-        ejemplos = [
-            Producto(nombre="Teclado", descripcion="Mecánico", precio=45.9, stock=10),
-            Producto(nombre="Mouse", descripcion="Inalámbrico", precio=25.0, stock=20),
-            Producto(nombre="Monitor", descripcion="24 pulgadas", precio=150.0, stock=5),
-        ]
-        db.session.add_all(ejemplos)
-        db.session.commit()
-        click.echo("✔ Datos de ejemplo insertados")
+    app.cli.add_command(create_db_command)
+    app.cli.add_command(drop_db_command)
+    app.cli.add_command(seed_command)

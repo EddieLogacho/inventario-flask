@@ -2,8 +2,9 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from services import UsuariosRepo, ProductosRepo
+from inventario.services import UsuariosRepo, ProductosRepo  # 🔥 CORREGIDO
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"

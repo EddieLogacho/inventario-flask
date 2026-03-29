@@ -1,1 +1,7 @@
-2026-03-05T17:23:22.660411 | teclado | 10.0 | 20 | EL MEJOR DEL MUNDO
+def guardar_txt(nombre, cantidad, precio):
+    with open("inventario/data/datos.txt", "a", encoding="utf-8") as f:
+        f.write(f"{nombre},{cantidad},{precio}\n")
+
+def leer_txt():
+    with open("inventario/data/datos.txt", "r", encoding="utf-8") as f:
+        return f.readlines()

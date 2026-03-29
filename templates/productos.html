@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-3">Listado de Productos</h2>
+
+{{ url_for('reporte_productos_pdf') }} class="btn btn-danger mb-3">
+📄 Generar PDF
+</a>
+
+<table class="table table-striped bg-white">
+<tr>
+<th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th>
+</tr>
+{% for p in productos %}
+<tr>
+<td>{{ p.id_producto }}</td>
+<td>{{ p.nombre }}</td>
+<td>{{ p.precio }}</td>
+<td>{{ p.stock }}</td>
+<td>
+{{ url_for('eliminar_producto', id_producto=p.id_producto) }} class="btn btn-danger btn-sm">Eliminar</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
+``

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Contacto</h2>
+
+<p>Si tienes alguna consulta, puedes contactarnos llenando el siguiente formulario:</p>
+
+<form method="post">
+    <label>Nombre:</label><br>
+    <input type="text" name="nombre" required><br><br>
+
+    <label>Correo electrónico:</label><br>
+    <input type="email" name="email" required><br><br>
+
+    <label>Mensaje:</label><br>
+    <textarea name="mensaje" rows="4" required></textarea><br><br>
+
+    <button type="submit">Enviar</button>
+</form>
+
+{% if enviado %}
+<p><strong>✅ Gracias por contactarnos. Tu mensaje fue enviado.</strong></p>
+{% endif %}
+
+{% endblock %}
